@@ -20,6 +20,7 @@ METADATA_FILE = BACKUPS_DIR / "metadata.json"
 
 async def periodic_backups():
     has_backed_up = False
+    should_do_first_wait = not bool(os.environ.get("NO_FIRST_WAIT"))
     redis_url = os.environ["REDIS_URL"]
     await create_redis(redis_url).ping()
 
@@ -37,7 +38,7 @@ async def periodic_backups():
                 second=0,
             )
             wait_time = (next_backup - now).total_seconds()
-            if wait_time > 0 and (not has_backed_up and bool(os.environ.get("NO_FIRST_WAIT"))):
+            if wait_time > 0 and (has_backed_up or should_do_first_wait):
                 logger.info(f"Next backup in {next_backup}, sleeping for {wait_time:2f} sec")
                 await asyncio.sleep(wait_time)
             logger.info(f"Starting backup")
