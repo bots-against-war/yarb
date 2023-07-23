@@ -1,6 +1,7 @@
 # yarb
 
-Yet another Redis backup utility. Partial port of [upstash-redis-dump](https://github.com/upstash/upstash-redis-dump).
+Yet another Redis backup utility. Partial port of [upstash-redis-dump](https://github.com/upstash/upstash-redis-dump)
+to Python 3.10+.
 
 ## Dump
 
