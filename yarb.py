@@ -79,7 +79,7 @@ def write_cmd_resp(cmd: list[str], file: TextIO) -> None:
     """Port of https://github.com/upstash/upstash-redis-dump/blob/7ac7c7ebb1b72726cef19df56831327dbc4e0fc8/redisdump/redisdump.go#L139"""
     file.write(f"*{len(cmd)}\r\n")
     for arg in cmd:
-        file.write(f"${len(arg)}\r\n{arg}\r\n")
+        file.write(f"${len(arg.encode('utf-8'))}\r\n{arg}\r\n")
 
 
 async def dump_key_batch(r: Redis, file: TextIO, keys: list[str], cmd_batch_size: int, scan_batch_size: int) -> None:
