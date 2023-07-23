@@ -38,12 +38,12 @@ async def main():
     keys = await local_redis.keys()
     print(f"Retrieved {len(keys)} keys")
 
-    with tqdm(total=len(keys)) as progress_bar:
+    with tqdm(total=len(keys)) as progress_bar, open("backup-validation.log", "w") as file:
         for key in keys:
             local_value = await get_key_value(local_redis, key)
             prod_value = await get_key_value(prod_redis, key)
             if local_value != prod_value:
-                print(f"\n{key!r}\n{local_value = }\n{prod_value = }\n\n")
+                print(f"\n{key!r}\n{local_value = }\n{prod_value = }\n\n", file=file)
             progress_bar.update()
 
 
