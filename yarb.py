@@ -72,7 +72,7 @@ async def key_value_cmds(r: Redis, key: str, cmd_batch_size: int, scan_batch_siz
 
 async def key_ttl_cmd(r: Redis, key: str) -> list[str]:
     ttl = await r.ttl(key)
-    return ["EXPIREAT", key, str(time.time() + ttl)]
+    return ["EXPIREAT", key, str(int(time.time() + ttl))]
 
 
 def write_cmd_resp(cmd: list[str], file: TextIO) -> None:
@@ -144,13 +144,13 @@ if __name__ == "__main__":
         "--scan-batch-size",
         default="100",
         type=int,
-        help="Batch size for scanning Redis keys",
+        help="Batch size for scanning Redis keys, sets and hsets",
     )
     parser.add_argument(
         "--cmd-batch-size",
         default="1000",
         type=int,
-        help="Batch size for generated backup commands",
+        help="Batch size for generated backup commands (RPUSH, SADD, HSET)",
     )
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
