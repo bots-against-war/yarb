@@ -16,9 +16,6 @@ logger = logging.getLogger("yarb")
 WrappedFuncT = TypeVar("WrappedFuncT")
 
 
-logger = logging.getLogger(__name__)
-
-
 def redis_retry() -> Callable[[WrappedFuncT], WrappedFuncT]:
     return tenacity.retry(  # type: ignore
         wait=tenacity.wait.wait_random_exponential(multiplier=1, max=30, exp_base=2, min=0.5),
