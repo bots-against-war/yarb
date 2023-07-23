@@ -3,6 +3,7 @@ import asyncio
 import itertools
 import logging
 import time
+from typing import Callable, Generator, Sequence, TextIO, TypeVar
 from urllib.parse import urlparse
 
 import tenacity
@@ -39,8 +40,6 @@ def create_redis(redis_url: str) -> Redis:
         ssl_cert_reqs=None,  # this is required for Heroku-managed redis, full SSL config TBD
     )
 
-
-from typing import Callable, Generator, Sequence, TextIO, TypeVar
 
 ItemT = TypeVar("ItemT")
 
