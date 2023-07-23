@@ -90,7 +90,7 @@ async def dump_key_batch(r: Redis, file: TextIO, keys: list[str], cmd_batch_size
             write_cmd_resp(cmd, file)
 
 
-async def main(
+async def yarb_run(
     redis_url: str,
     output_filename: str,
     keys_match: str,
@@ -98,7 +98,7 @@ async def main(
     workers: int,
     scan_batch_size: int,
     cmd_batch_size: int,
-):
+) -> int:
     r = create_redis(redis_url)
     start_time = time.time()
     await r.ping()
@@ -131,6 +131,10 @@ async def main(
             worker_tasks.add(task)
             task.add_done_callback(worker_tasks.discard)
             progress_bar.update(n=len(key_batch))
+        for earliest in asyncio.as_completed(worker_tasks):
+            await earliest
+    logger.info("Done!")
+    return key_count
 
 
 if __name__ == "__main__":
@@ -158,7 +162,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     asyncio.run(
-        main(
+        yarb_run(
             redis_url=args.redis_url,
             output_filename=args.output_filename,
             keys_match=args.keys,
