@@ -1,10 +1,10 @@
-
 import asyncio
+import os
 from typing import Any
-from yarb import create_redis, Redis
+
 from tqdm import tqdm
 
-import os
+from yarb import Redis, create_redis
 
 
 async def get_key_value(redis: Redis, key: str) -> Any:
