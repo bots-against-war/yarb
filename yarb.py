@@ -72,7 +72,10 @@ async def key_value_cmds(r: Redis, key: str, cmd_batch_size: int, scan_batch_siz
 
 async def key_ttl_cmd(r: Redis, key: str) -> list[str]:
     ttl = await r.ttl(key)
-    return ["EXPIREAT", key, str(int(time.time() + ttl))]
+    if ttl > 0:
+        return ["EXPIREAT", key, str(int(time.time() + ttl))]
+    else:
+        return []
 
 
 def write_cmd_resp(cmd: list[str], file: TextIO) -> None:
