@@ -100,11 +100,16 @@ def write_cmd_resp(cmd: list[str], file: TextIO) -> None:
 
 
 async def dump_key_batch(r: Redis, file: TextIO, keys: list[str], cmd_batch_size: int, scan_batch_size: int) -> None:
-    for key in keys:
-        cmds = await key_value_cmds(r, key, cmd_batch_size=cmd_batch_size, scan_batch_size=scan_batch_size)
-        cmds.append(await key_ttl_cmd(r, key))
-        for cmd in cmds:
-            write_cmd_resp(cmd, file)
+    try:
+        for key in keys:
+            cmds = await key_value_cmds(r, key, cmd_batch_size=cmd_batch_size, scan_batch_size=scan_batch_size)
+            cmds.append(await key_ttl_cmd(r, key))
+            for cmd in cmds:
+                write_cmd_resp(cmd, file)
+        return True
+    except Exception:
+        logger.exception("Error dumping key batch")
+        return False
 
 
 async def yarb_run(
@@ -127,14 +132,16 @@ async def yarb_run(
     key_count = await r.dbsize()
     logger.info(f"Total keys in the database: {key_count}")
 
-    worker_tasks: set[asyncio.Task[None]] = set()
+    worker_tasks: set[asyncio.Task[bool]] = set()
     cursor = "0"
     with tqdm(total=key_count) as progress_bar, open(output_filename, "w") as file:
         while cursor != 0:
             cursor, key_batch = await r.scan(cursor=cursor, match=keys_match, count=scan_batch_size)
             if worker_tasks and len(worker_tasks) >= workers:
                 for earliest in asyncio.as_completed(worker_tasks):
-                    await earliest
+                    is_success = await earliest
+                    if not is_success:
+                        raise RuntimeError("Backup is broken, one of the workers failed to dump its batch")
                     break
             task = asyncio.create_task(
                 dump_key_batch(
@@ -149,7 +156,9 @@ async def yarb_run(
             task.add_done_callback(worker_tasks.discard)
             progress_bar.update(n=len(key_batch))
         for earliest in asyncio.as_completed(worker_tasks):
-            await earliest
+            is_success = await earliest
+            if not is_success:
+                raise RuntimeError("Backup is broken, one of the workers failed to dump its batch")
     logger.info("Done!")
     return key_count
 
