@@ -5,10 +5,26 @@ import logging
 import time
 from urllib.parse import urlparse
 
+import tenacity
 from redis.asyncio import Redis  # type: ignore
 from tqdm import tqdm  # type: ignore
 
 logger = logging.getLogger("yarb")
+
+
+WrappedFuncT = TypeVar("WrappedFuncT")
+
+
+logger = logging.getLogger(__name__)
+
+
+def redis_retry() -> Callable[[WrappedFuncT], WrappedFuncT]:
+    return tenacity.retry(  # type: ignore
+        wait=tenacity.wait.wait_random_exponential(multiplier=1, max=30, exp_base=2, min=0.5),
+        stop=tenacity.stop.stop_after_delay(max_delay=60),
+        retry=tenacity.retry_if_exception_type(),
+        after=tenacity.after.after_log(logger, log_level=logging.WARNING),
+    )
 
 
 def create_redis(redis_url: str) -> Redis:
@@ -24,7 +40,7 @@ def create_redis(redis_url: str) -> Redis:
     )
 
 
-from typing import Generator, Sequence, TextIO, TypeVar
+from typing import Callable, Generator, Sequence, TextIO, TypeVar
 
 ItemT = TypeVar("ItemT")
 
@@ -33,6 +49,7 @@ def batches(seq: Sequence[ItemT], size: int) -> Generator[Sequence[ItemT], None,
     return (seq[pos : pos + size] for pos in range(0, len(seq), size))
 
 
+@redis_retry()
 async def key_value_cmds(r: Redis, key: str, cmd_batch_size: int, scan_batch_size: int) -> list[list[str]]:
     """Port of https://github.com/upstash/upstash-redis-dump/blob/7ac7c7ebb1b72726cef19df56831327dbc4e0fc8/redisdump/redisdump.go#L148"""
     key_type = await r.type(key)
@@ -70,6 +87,7 @@ async def key_value_cmds(r: Redis, key: str, cmd_batch_size: int, scan_batch_siz
             return []
 
 
+@redis_retry()
 async def key_ttl_cmd(r: Redis, key: str) -> list[str]:
     ttl = await r.ttl(key)
     if ttl > 0:

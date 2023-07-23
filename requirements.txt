@@ -1,5 +1,6 @@
 redis==4.3.4
 tqdm==4.65.0
+tenacity==8.2.2
 
 black==23.7.0
 isort==5.12.0

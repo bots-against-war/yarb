@@ -49,7 +49,7 @@ async def periodic_backups():
                 output_filename=str(dump_file),
                 keys_match="*",
                 db=0,
-                workers=20,
+                workers=10,
                 scan_batch_size=100,
                 cmd_batch_size=1000,
             )
