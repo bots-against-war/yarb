@@ -36,7 +36,7 @@ async def periodic_backups():
                 second=0,
             )
             wait_time = (next_backup - now).total_seconds()
-            if wait_time > 0:
+            if wait_time > 0 and not os.environ.get("NO_FIRST_WAIT"):
                 logger.info(f"Next backup in {next_backup}, sleeping for {wait_time:2f} sec")
                 await asyncio.sleep(wait_time)
             logger.info(f"Starting backup")
