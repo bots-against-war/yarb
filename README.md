@@ -15,7 +15,7 @@ python yarb.py --help  # for options
 
 ## Load
 
-From [official manual](https://redis.io/docs/manual/patterns/bulk-loading/):
+From [manual](https://redis.io/docs/manual/patterns/bulk-loading/):
 
 ```sh
 cat my-dump.resp | redis-cli --pipe
