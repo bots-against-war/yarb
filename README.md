@@ -34,6 +34,8 @@ python yarb_periodic.py --help for options
 
 See full [manual](https://linuxhandbook.com/create-systemd-services/). Example setup:
 
+1. Create `systemd` service
+
 ```sh
 sudo nano /etc/systemd/system/yarb.service
 ```
@@ -51,14 +53,39 @@ Type=simple
 Restart=always
 RestartSec=1
 User=my-username
-ExecStart=/full/path/to/venv/bin/python /full/path/to/yarb_periodic.py --workers 5
+ExecStart=/full/path/to/venv/bin/python /path/to/yarb_periodic.py --workers 10 --backups-dir /path/to/backups/dir
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-Set `REDIS_URL` environment variable
+2. Create `.conf` configuration to pass environment variable with Redis URL
 
 ```sh
 sudo systemctl edit yarb.service
+```
+
+Paste something like
+
+```
+[Service]
+Environment="REDIS_URL=rediss://username:password@redis-host.com:6379"
+```
+
+3. Start the service and check everything is working
+
+```sh
+sudo systemctl start yarb.service
+
+# check status
+sudo systemctl status yarb.service  
+
+# to view live logs
+journalctl -u yarb.service -f  
+```
+
+4. Enable service so that it is restarted on reboot
+
+```sh
+sudo systemctl enable yarb.service
 ```
