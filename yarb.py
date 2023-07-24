@@ -155,6 +155,8 @@ async def yarb_run(
     output_filename: str,
     options: YarbOptions,
 ) -> int:
+    logger.info(f"Running yarb with options: {options}, writing output to {output_filename}")
+
     r = create_redis(redis_url)
     start_time = time.time()
     await r.ping()
