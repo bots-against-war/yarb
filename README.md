@@ -27,7 +27,7 @@ cat my-dump.resp | redis-cli --pipe
 export REDIS_URL="rediss://:password1@redis-host.com:12345"
 python yarb_periodic.py
 
-python yarb_periodic.py --help for options
+python yarb_periodic.py --help  # for options
 ```
 
 ### Run as `systemd` service
