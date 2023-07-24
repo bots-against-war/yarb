@@ -3,6 +3,7 @@ import asyncio
 import datetime
 import json
 import logging
+import os
 import time
 from pathlib import Path
 
@@ -81,8 +82,8 @@ async def periodic_backup(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("redis_url")
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--redis-url", default="_env", help="Redis URL; defaults to REDIS_URL environment variable")
     parser.add_argument("--backups-dir", default="backups", help="Directory to store backups and metadata")
     parser.add_argument("--period", default="1", type=float, help="Backup period in hours")
     parser.add_argument("--keep-last", default="24", type=int, help="Number of most recent backups to store")
@@ -93,9 +94,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    redis_url = args.redis_url
+    if redis_url == "_env":
+        redis_url = os.environ["REDIS_URL"]
+
     asyncio.run(
         periodic_backup(
-            redis_url=args.redis_url,
+            redis_url=redis_url,
             backups_dir=Path(args.backups_dir),
             period_hrs=float(args.period),
             keep_last=int(args.keep_last),
