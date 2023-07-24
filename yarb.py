@@ -3,6 +3,7 @@ import asyncio
 import itertools
 import logging
 import time
+from dataclasses import dataclass
 from typing import Callable, Generator, Sequence, TextIO, TypeVar
 from urllib.parse import urlparse
 
@@ -112,22 +113,55 @@ async def dump_key_batch(r: Redis, file: TextIO, keys: list[str], cmd_batch_size
         return False
 
 
+@dataclass
+class YarbOptions:
+    keys_match: str
+    db: int
+    workers: int
+    scan_batch_size: int
+    cmd_batch_size: int
+
+    @classmethod
+    def add_argparse_options(cls, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--keys", default="*", help="Match pattern for Redis SCAN command")
+        parser.add_argument("--db", default="0", type=int, help="Redis DB to dump")
+        parser.add_argument("--workers", default="1", type=int, help="Number of parallel requests to Redis")
+        parser.add_argument(
+            "--scan-batch-size",
+            default="100",
+            type=int,
+            help="Batch size for scanning Redis keys, sets and hsets",
+        )
+        parser.add_argument(
+            "--cmd-batch-size",
+            default="1000",
+            type=int,
+            help="Batch size for generated backup commands (RPUSH, SADD, HSET)",
+        )
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace):
+        return YarbOptions(
+            keys_match=args.keys,
+            db=int(args.db),
+            workers=int(args.workers),
+            scan_batch_size=int(args.scan_batch_size),
+            cmd_batch_size=int(args.cmd_batch_size),
+        )
+
+
 async def yarb_run(
     redis_url: str,
     output_filename: str,
-    keys_match: str,
-    db: int,
-    workers: int,
-    scan_batch_size: int,
-    cmd_batch_size: int,
+    options: YarbOptions,
 ) -> int:
     r = create_redis(redis_url)
     start_time = time.time()
     await r.ping()
     logger.info(f"Redis ping returned in {time.time() - start_time:.4f} sec")
 
-    await r.select(db)
-    logger.info(f"Redis DB #{db} selected")
+    await r.select(options.db)
+    logger.info(f"Redis DB #{options.db} selected")
 
     key_count = await r.dbsize()
     logger.info(f"Total keys in the database: {key_count}")
@@ -136,8 +170,8 @@ async def yarb_run(
     cursor = "0"
     with tqdm(total=key_count) as progress_bar, open(output_filename, "w") as file:
         while cursor != 0:
-            cursor, key_batch = await r.scan(cursor=cursor, match=keys_match, count=scan_batch_size)
-            if worker_tasks and len(worker_tasks) >= workers:
+            cursor, key_batch = await r.scan(cursor=cursor, match=options.keys_match, count=options.scan_batch_size)
+            if worker_tasks and len(worker_tasks) >= options.workers:
                 for earliest in asyncio.as_completed(worker_tasks):
                     is_success = await earliest
                     if not is_success:
@@ -148,8 +182,8 @@ async def yarb_run(
                     r=r,
                     file=file,
                     keys=key_batch,
-                    cmd_batch_size=cmd_batch_size,
-                    scan_batch_size=scan_batch_size,
+                    cmd_batch_size=options.cmd_batch_size,
+                    scan_batch_size=options.scan_batch_size,
                 )
             )
             worker_tasks.add(task)
@@ -167,21 +201,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("redis_url")
     parser.add_argument("output_filename")
-    parser.add_argument("--keys", default="*", help="Match pattern for Redis SCAN command")
-    parser.add_argument("--db", default="0", type=int, help="Redis DB to dump")
-    parser.add_argument("--workers", default="1", type=int, help="Number of parallel requests to Redis")
-    parser.add_argument(
-        "--scan-batch-size",
-        default="100",
-        type=int,
-        help="Batch size for scanning Redis keys, sets and hsets",
-    )
-    parser.add_argument(
-        "--cmd-batch-size",
-        default="1000",
-        type=int,
-        help="Batch size for generated backup commands (RPUSH, SADD, HSET)",
-    )
+    YarbOptions.add_argparse_options(parser)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
@@ -191,10 +211,6 @@ if __name__ == "__main__":
         yarb_run(
             redis_url=args.redis_url,
             output_filename=args.output_filename,
-            keys_match=args.keys,
-            db=int(args.db),
-            workers=int(args.workers),
-            scan_batch_size=int(args.scan_batch_size),
-            cmd_batch_size=int(args.cmd_batch_size),
+            options=YarbOptions.from_args(args),
         )
     )
