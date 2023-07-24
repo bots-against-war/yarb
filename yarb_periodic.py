@@ -96,7 +96,9 @@ if __name__ == "__main__":
 
     redis_url = args.redis_url
     if redis_url == "_env":
-        redis_url = os.environ["REDIS_URL"]
+        redis_url = os.environ.get("REDIS_URL")
+        if redis_url is None:
+            raise RuntimeError("REDIS_URL env var is not set")
 
     asyncio.run(
         periodic_backup(
