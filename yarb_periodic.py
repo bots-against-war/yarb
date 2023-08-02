@@ -33,6 +33,9 @@ async def periodic_backup(
     start_time = time.time()
     await create_redis(redis_url).ping()
     logger.info(f"Redis ping returned in {time.time() - start_time}")
+    
+    # TEMP
+    logger.error("ERROR EXAMPLE")
 
     logger.info("Starting periodic backups")
     while True:
@@ -115,9 +118,6 @@ if __name__ == "__main__":
     else:
         logger.info("Running without alerts")
     
-    # TEMP
-    logger.error("ERROR EXAMPLE")
-
     asyncio.run(
         periodic_backup(
             redis_url=redis_url,
