@@ -4,7 +4,6 @@ import datetime
 import json
 import logging
 import os
-import socket
 import time
 from pathlib import Path
 
@@ -113,7 +112,7 @@ if __name__ == "__main__":
         logger.info("Alerts configured")
     else:
         logger.info("Running without alerts")
-    
+
     asyncio.run(
         periodic_backup(
             redis_url=redis_url,
