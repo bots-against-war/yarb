@@ -4,8 +4,11 @@ import datetime
 import json
 import logging
 import os
+import socket
 import time
 from pathlib import Path
+
+from telebot_components.utils.alerts import configure_alerts
 
 from yarb import YarbOptions, create_redis, yarb_run
 
@@ -99,6 +102,18 @@ if __name__ == "__main__":
         redis_url = os.environ.get("REDIS_URL")
         if redis_url is None:
             raise RuntimeError("REDIS_URL env var is not set")
+
+    bot_token = os.environ.get("BOT_TOKEN")
+    alerts_channel_id = os.environ.get("ALERTS_CHANNEL_ID")
+    if bot_token is not None and alerts_channel_id is not None:
+        configure_alerts(
+            token=bot_token,
+            alerts_channel_id=alerts_channel_id,
+            app_name=f"Periodic redis backup ({socket.gethostname()})",
+        )
+    
+    # TEMP
+    logger.error("ERROR EXAMPLE")
 
     asyncio.run(
         periodic_backup(
