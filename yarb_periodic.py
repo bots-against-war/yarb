@@ -33,10 +33,6 @@ async def periodic_backup(
     start_time = time.time()
     await create_redis(redis_url).ping()
     logger.info(f"Redis ping returned in {time.time() - start_time}")
-    
-    # TEMP
-    logger.error("ERROR EXAMPLE")
-
     logger.info("Starting periodic backups")
     while True:
         try:
@@ -112,7 +108,7 @@ if __name__ == "__main__":
         configure_alerts(
             token=bot_token,
             alerts_channel_id=alerts_channel_id,
-            app_name=f"Periodic redis backup ({socket.gethostname()})",
+            app_name=f"Periodic redis backup",
         )
         logger.info("Alerts configured")
     else:
