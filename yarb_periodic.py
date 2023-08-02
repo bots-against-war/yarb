@@ -111,6 +111,9 @@ if __name__ == "__main__":
             alerts_channel_id=alerts_channel_id,
             app_name=f"Periodic redis backup ({socket.gethostname()})",
         )
+        logger.info("Alerts configured")
+    else:
+        logger.info("Running without alerts")
     
     # TEMP
     logger.error("ERROR EXAMPLE")
