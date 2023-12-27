@@ -227,3 +227,5 @@ pip-selfcheck.json
 env.sh
 *resp
 run.sh
+metadata.json
+metadata.png
