@@ -33,7 +33,7 @@ if __name__ == "__main__":
         ("total_keys", "dump_size_mb", "dump_time"),
         ("Total key #", "Dump size, Mb", "Dump time, sec"),
     ):
-        ax.plot(dts, [m[key] for _, m in dated_metadata])
+        ax.plot(dts, [m[key] for _, m in dated_metadata])  # type: ignore
         ax.set_ylabel(title)
 
     axes[-1].set_xlabel("Date")

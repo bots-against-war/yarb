@@ -89,3 +89,15 @@ journalctl -u yarb.service -f
 ```sh
 sudo systemctl enable yarb.service
 ```
+
+## Aux scripts
+
+After dumping remote Redis, you can load the dump into local instance and compare it with prod.
+This script will go through local keys and check corresponding remote values, printing any changes.
+
+```bash
+REDIS_URL=my-prod-redis:12345 python diff_redis_with_local.py
+```
+
+`yarb_periodic.py` stores metadata for each backup in a JSON file. To visualize some trends
+in this metadata, use `visualize_metadata.py`.

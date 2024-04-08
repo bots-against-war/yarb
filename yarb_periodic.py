@@ -106,7 +106,7 @@ if __name__ == "__main__":
     if bot_token is not None and alerts_channel_id is not None:
         configure_alerts(
             token=bot_token,
-            alerts_channel_id=alerts_channel_id,
+            alerts_channel_id=alerts_channel_id,  # type: ignore
             app_name=f"Periodic redis backup",
         )
         logger.info("Alerts configured")

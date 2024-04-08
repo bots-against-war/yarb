@@ -53,7 +53,10 @@ async def key_value_cmds(r: Redis, key: str, cmd_batch_size: int, scan_batch_siz
     logger.debug(f"Key {key!r} has type {key_type!r}")
     match key_type:
         case "string":
-            return [["SET", key, await r.get(key)]]
+            if (value := await r.get(key)) is not None:
+                return [["SET", key, value]]
+            else:
+                return []  # preventing race condition, key could be deleted already
         case "list":
             values = await r.lrange(key, 0, -1)
             return [["RPUSH", key, *value_batch] for value_batch in batches(values, size=cmd_batch_size)]
@@ -100,7 +103,7 @@ def write_cmd_resp(cmd: list[str], file: TextIO) -> None:
         file.write(f"${len(arg.encode('utf-8'))}\r\n{arg}\r\n")
 
 
-async def dump_key_batch(r: Redis, file: TextIO, keys: list[str], cmd_batch_size: int, scan_batch_size: int) -> None:
+async def dump_key_batch(r: Redis, file: TextIO, keys: list[str], cmd_batch_size: int, scan_batch_size: int) -> bool:
     try:
         for key in keys:
             cmds = await key_value_cmds(r, key, cmd_batch_size=cmd_batch_size, scan_batch_size=scan_batch_size)
