@@ -28,12 +28,13 @@ if __name__ == "__main__":
     dts = [dt for dt, _ in dated_metadata]
 
     fig, axes = plt.subplots(nrows=3, sharex="all", figsize=(8, 10))
-    for ax, key, title in zip(
+    for ax, key, title, scale_factor in zip(
         axes,
         ("total_keys", "dump_size_mb", "dump_time"),
-        ("Total key #", "Dump size, Mb", "Dump time, sec"),
+        ("Total key, thousands", "Dump size, Mb", "Dump time, min"),
+        (1 / 1000, 1, 1 / 60),
     ):
-        ax.plot(dts, [m[key] for _, m in dated_metadata])  # type: ignore
+        ax.plot(dts, [m[key] * scale_factor for _, m in dated_metadata], ".")  # type: ignore
         ax.set_ylabel(title)
 
     axes[-1].set_xlabel("Date")
