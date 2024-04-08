@@ -41,7 +41,9 @@ async def periodic_backup(
             wait_time = next_backup_time - time.time()
             if wait_time > 0 and (has_backed_up or first_wait):
                 next_backup_dt = datetime.datetime.fromtimestamp(next_backup_time)
-                logger.info(f"Next backup in {next_backup_dt}, sleeping for {wait_time:.2f} sec")
+                logger.info(
+                    f"Next backup in {next_backup_dt}, sleeping for {wait_time:.1f} sec = {wait_time / 60 :.1f} min"
+                )
                 await asyncio.sleep(wait_time)
             logger.info(f"Starting backup")
             dump_file = backups_dir / f"redis-backup-{datetime.datetime.now().isoformat(timespec='seconds')}.resp"
