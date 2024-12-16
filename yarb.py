@@ -168,12 +168,13 @@ async def yarb_run(
     await r.select(options.db)
     logger.info(f"Redis DB #{options.db} selected")
 
-    key_count = await r.dbsize()
-    logger.info(f"Total keys in the database: {key_count}")
+    total_keys = await r.dbsize()
+    logger.info(f"Total keys in the database: {total_keys}")
 
     worker_tasks: set[asyncio.Task[bool]] = set()
     cursor = "0"
-    with tqdm(total=key_count) as progress_bar, open(output_filename, "w") as file:
+    dumped_keys = 0
+    with tqdm() as progress_bar, open(output_filename, "w") as file:
         while cursor != 0:
             cursor, key_batch = await r.scan(cursor=cursor, match=options.keys_match, count=options.scan_batch_size)
             if worker_tasks and len(worker_tasks) >= options.workers:
@@ -194,12 +195,13 @@ async def yarb_run(
             worker_tasks.add(task)
             task.add_done_callback(worker_tasks.discard)
             progress_bar.update(n=len(key_batch))
+            dumped_keys += len(key_batch)
         for earliest in asyncio.as_completed(worker_tasks):
             is_success = await earliest
             if not is_success:
                 raise RuntimeError("Backup is broken, one of the workers failed to dump its batch")
-    logger.info("Done!")
-    return key_count
+    logger.info(f"Done, {dumped_keys} out of total {total_keys} keys were matched and dumped!")
+    return dumped_keys
 
 
 if __name__ == "__main__":

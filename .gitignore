@@ -229,3 +229,5 @@ env.sh
 run.sh
 metadata.json
 metadata.png
+.DS_Store
+publish.sh
